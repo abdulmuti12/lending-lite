@@ -1,0 +1,17 @@
+# Environment files
+.env
+
+# Dependency directories
+/vendor
+/node_modules
+
+# Laravel generated files
+/storage/*.key
+/storage/logs/*.log
+/bootstrap/cache/*.php
+/public/storage
+
+# IDE/Editor specific files
+.idea/
+.vscode/
+*.iml
