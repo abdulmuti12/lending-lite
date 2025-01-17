@@ -27,5 +27,10 @@ class Investment extends Model
         return $this->belongsTo(UserAccount::class, 'lender_id', 'id');
     }
 
+    public function banks()
+    {
+        return $this->belongsTo(Bank::class, 'bank_id', 'id');
+    }
+
     public $timestamps = false;
 }

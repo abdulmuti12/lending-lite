@@ -9,20 +9,26 @@ use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Api\BaseController;
 use App\Http\Resources\TransactionLogResource;
+use App\Models\Debit;
+use App\Models\Transaction;
 use App\Models\TransactionLog;
+use Illuminate\Support\Facades\Hash;
 
 class LenderController extends BaseController
 {
     protected $lenderService;
     private $user;
+    private $log;
 
     public function __construct(
         LenderService $lenderService,
+        TransactionLog $transactionLog
     )
     {
         $this->lenderService = $lenderService;
         $this->authCheck();
         $this->user = Auth::user();
+        $this->log=$transactionLog;
     }
 
     public function information(Request $request)
@@ -73,7 +79,7 @@ class LenderController extends BaseController
         $raw = (bool) $request->query('raw') ?? false;
         $search = $request->all() ?? null;
         // $collection=TransactionLog::where('user_id', $this->user->id);
-        $collection=TransactionLog::where('type', 'Kredit');
+        $collection=TransactionLog::whereIn('type', ['Kredit', 'Debit']);
 
         if($request->startdate != null &&  $request->enddate == ''){
             return $this->sendResponse(true, "Failed", "Please Send Data Request Date with Complite Parameters");
@@ -85,11 +91,11 @@ class LenderController extends BaseController
                 if (isset($request->startdate) && $rows === "startdate") {
                     $startDate = $request->startdate;
                     $endDate = $request->enddate ?? $startDate;
+
                     $collection->whereBetween('created_at', [$startDate, $endDate]);
                 }
 
                 if ($rows == "virtual_account") {
-                    // dd($rows);
                     $collection->whereHas('investment', function ($q) use ($row) {
                         $q->where('va_number', '=',  $row);
                     });
@@ -133,6 +139,20 @@ class LenderController extends BaseController
 
         //     return $this->sendError($e->getMessage(), 'Access Data Failed', 400);
         // }
+    }
+
+    public function debit(Request $request){
+
+         try {
+
+            $response = $this->lenderService->debit($request->all());
+    
+            return $this->sendResponse($response['data'], $response['message'], $response['response_code']);
+    
+        } catch (\Exception $e) {
+
+            return $this->sendError($e->getMessage(), 'Access Data Failed', 400);
+        }
     }
     
 }

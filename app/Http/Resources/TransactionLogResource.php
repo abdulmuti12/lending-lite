@@ -14,13 +14,24 @@ class TransactionLogResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+
+        $name = $this->type === 'Debit' 
+        ? optional($this->debits->userAccount)->name 
+        : optional($this->investment->userAccount)->name;
+
+        $bank = $this->type === 'Debit' 
+        ? '' 
+        : optional($this->investment->banks)->name;
+    
         return [
             'id' => $this->id,
-            'name' => $this->investment->userAccount->name,
-            'virtual_account' => $this->investment->va_number,
+            'name' => $name,
+            'virtual_account' => optional($this->investment)->va_number,
+            "bank_name" => $bank,
             'amount' => $this->amount,
             'type' => $this->type,
-            'transaction_date' => $this->created_at
+            'transaction_date' => $this->created_at,
         ];
+    
     }
 }

@@ -3,6 +3,7 @@ namespace App\Services;
 
 use App\Models\Account;
 use App\Models\Bank;
+use App\Models\Debit;
 use App\Models\Investment;
 use App\Models\Transaction;
 use App\Models\TransactionLog;
@@ -141,7 +142,7 @@ class LenderService
             'created_at'=>now(),
             'remark'=>$data['remark'],
         ];
-        // dd($dataCollection);
+
         $transaction =Transaction::create($dataCollection);
         $updatedBalance=$findAccount->balance + $transaction->amount;
         $investment->status = 'Completed';
@@ -167,6 +168,75 @@ class LenderService
             'success' => true,
             'response_code' => Response::HTTP_OK,
             'message' => 'Payment Success',
+            'data' => null,
+        ];
+    }
+
+    public function debit(array $data): array
+    {
+        if (!$this->user || !Hash::check($data['password'], $this->user->password)) {
+            return [
+                'success' => false,
+                'response_code' => Response::HTTP_UNAUTHORIZED,
+                'message' => 'invalid Password',
+                'data' => null,
+            ];
+        }
+
+        $account = $this->user->account()->where('account_type', $data['account_type'])->first();
+
+        if($data['amount'] > $account->balance){
+
+            return [
+                'success' => false,
+                'response_code' => Response::HTTP_UNAUTHORIZED,
+                'message' => 'insufficient balance',
+                'data' => null,
+            ];        
+        }
+
+        $debitCollection = [
+            'amount' => $data['amount'],
+            'type' => $data['account_type'],
+            'remark' => $account->remark,
+            'account_id' => $account->id,
+            'created_at' => now(),
+        ];
+
+        $totalBalance = $account->balance - $data['amount'];
+        $debit = Debit::create($debitCollection);
+
+        $dataCollection =[
+            'debit_id'=>$debit->id,
+            'account_id'=>$account->id,
+            'amount'=>$debit->amount,
+            'transaction_date'=>now(),
+            'type_transaction'=>'Debit',
+            'created_at'=>now(),
+            'remark'=>$data['remark'],
+        ];
+
+        $transaction =Transaction::create($dataCollection);
+        $account->balance = $totalBalance;
+        $account->updated_at = now();
+        $account->save();
+
+        $logData=[
+            'user_id'=>$this->user->id,
+            'debit_id'=>$account->id,
+            'type'=>'Debit',
+            'amount'=>$data['amount'],
+            'description'=>$data['remark'],
+            'created_at'=>now()
+        ];
+
+        $logTransaction = TransactionLog::create($logData);
+
+       return 
+        [
+            'success' => true,
+            'response_code' => Response::HTTP_OK,
+            'message' => 'Debit Balance Success',
             'data' => null,
         ];
     }

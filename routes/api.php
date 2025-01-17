@@ -15,6 +15,7 @@ Route::group([ 'prefix' => 'digital-lending'], function () {
 
     Route::post('lender-payment-investment', [LenderController::class, 'paymentInvest']);
     Route::post('lender-investment', [LenderController::class, 'investmentSubmmission']);
+    Route::post('lender-debit', [LenderController::class, 'debit']);
     Route::get('lender-information', [LenderController::class, 'information']);
     Route::get('lender-transaction-log', [LenderController::class, 'logInvestmentPersonal']);
 

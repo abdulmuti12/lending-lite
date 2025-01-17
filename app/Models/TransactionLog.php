@@ -28,4 +28,9 @@ class TransactionLog extends Model
         return $this->belongsTo(Investment::class, 'investment_id', 'id');
     }
 
+    public function debits()
+    {
+        return $this->belongsTo(Debit::class, 'debit_id', 'id');
+    }
+
 }
