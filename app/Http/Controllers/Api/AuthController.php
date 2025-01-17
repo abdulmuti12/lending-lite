@@ -4,16 +4,16 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\Authentification;
+use App\Services\AuthentificationService;
 use Tymon\JWTAuth\Facades\JWTAuth;
 
-class AuthController extends Controller
+class AuthController extends BaseController
 {
-    protected $authentification;
+    protected $authentificationService;
 
-    public function __construct(Authentification $authentification)
+    public function __construct(AuthentificationService $authentificationService)
     {
-        $this->authentification = $authentification;
+        $this->authentificationService = $authentificationService;
     }
 
     /**
@@ -27,7 +27,7 @@ class AuthController extends Controller
         $credentials = $request->only('phone_number', 'password');
 
         try {
-            $response = $this->authentification->login($credentials);
+            $response = $this->authentificationService->login($credentials);
             return response()->json($response, $response['response_code']);
         } catch (\Exception $e) {
             return response()->json([

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Account;
 use App\Models\UserAccount;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -51,6 +52,7 @@ class RegisterService
                 'born_date' => $data['born_date'],
                 'email' => $data['email'],
                 'nik' => $data['nik'],
+                'address' => $data['address'],
                 'ktp_file' => $ktpFilePath, // Menyimpan path file
                 'type' => $data['type'],
             ];
@@ -64,6 +66,28 @@ class RegisterService
             }
 
             $userAccount = UserAccount::create($userData);
+
+            if ($userAccount->type == 'lender') {
+
+                $collectionTabungan=[
+                    'lender_id' => $userAccount->id,
+                    'account_type' => 'Tabungan',
+                    'balance' => 0,
+                    'opening_date' => now(),
+                    'created_at' => now()
+                ];
+
+                $collectionGiro=[
+                    'lender_id' => $userAccount->id,
+                    'account_type' => 'Giro',
+                    'balance' => 0,
+                    'opening_date' => now(),
+                    'created_at' => now()
+                ];
+
+                Account::create($collectionTabungan); //buat investasi Tabungan
+                Account::create($collectionGiro); //buat investasi Giro
+            }
 
             return [
                 'success' => true,

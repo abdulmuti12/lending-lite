@@ -23,6 +23,7 @@ class UserAccount extends Authenticatable implements JWTSubject
         'ktp_file',
         'salary_per_month',
         'password',
+        'address',
         'limit_loan',
         'npwp',
         'type',
@@ -42,5 +43,10 @@ class UserAccount extends Authenticatable implements JWTSubject
         return [];
     }
 
+    public function account(){
+
+        return $this->hasMany( Account::class, 'lender_id', 'id');
+
+    }
     public $timestamps = false;
 }

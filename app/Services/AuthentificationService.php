@@ -9,7 +9,7 @@ use Tymon\JWTAuth\Facades\JWTAuth;
 use  Illuminate\Support\Facades\Auth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
-class Authentification
+class AuthentificationService
 {
     /**
      *

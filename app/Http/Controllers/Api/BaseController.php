@@ -12,6 +12,7 @@ class BaseController extends Controller
     {
         return response()->json([
             'success' => true,
+            'response_code'=>Response::HTTP_OK,
             'message' => $message,
             'data' => $result
         ], Response::HTTP_OK);
@@ -21,7 +22,8 @@ class BaseController extends Controller
     public function sendError($error, $message = null, $code = Response::HTTP_INTERNAL_SERVER_ERROR)
     {
         return response()->json([
-            'success' => false,
+            'success' => false, 
+            'response_code'=>$code,
             'message' => $message,
             'error' => $error
         ], $code);
