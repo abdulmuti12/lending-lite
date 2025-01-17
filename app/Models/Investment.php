@@ -22,5 +22,10 @@ class Investment extends Model
         'updated_at',
     ];
 
+    public function userAccount()
+    {
+        return $this->belongsTo(UserAccount::class, 'lender_id', 'id');
+    }
+
     public $timestamps = false;
 }

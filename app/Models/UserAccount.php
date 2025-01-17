@@ -12,6 +12,7 @@ class UserAccount extends Authenticatable implements JWTSubject
 {
     protected $table = 'user_account';
 
+
     protected $fillable = [
         'id',
         'name',
@@ -31,6 +32,10 @@ class UserAccount extends Authenticatable implements JWTSubject
         'updated_at',
     ];
 
+    protected $hidden = [
+        'password',
+    ];
+
 
     public function getJWTIdentifier()
     {
@@ -48,5 +53,6 @@ class UserAccount extends Authenticatable implements JWTSubject
         return $this->hasMany( Account::class, 'lender_id', 'id');
 
     }
+    
     public $timestamps = false;
 }

@@ -4,87 +4,135 @@ namespace App\Http\Controllers\Api\Lender;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Services\InvestmentService;
+use App\Services\LenderService;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Api\BaseController;
+use App\Http\Resources\TransactionLogResource;
+use App\Models\TransactionLog;
 
 class LenderController extends BaseController
 {
-    protected $investmentService;
     protected $lenderService;
+    private $user;
 
     public function __construct(
-        InvestmentService $investmentService,
+        LenderService $lenderService,
     )
     {
-        $this->investmentService = $investmentService;
+        $this->lenderService = $lenderService;
+        $this->authCheck();
+        $this->user = Auth::user();
     }
 
     public function information(Request $request)
     {
 
-        if (Auth::user() === null) {
-            return [
-                'success' => false,
-                'response_code' => Response::HTTP_BAD_REQUEST,
-                'message' => 'You Don\'t Have Permission ',
-                'data' => null,
-            ];
-        }
         try {
-            // Pass data dan file ke service
-            $response = $this->investmentService->information();
+
+            $response = $this->lenderService->information();
 
             return $this->sendResponse($response['data'], $response['message'], $response['response_code']);
 
         } catch (\Exception $e) {
 
-            return $this->sendError($e->getMessage(), 'Registration failed', 400);
+            return $this->sendError($e->getMessage(), 'Access Data Failed', 400);
         }
     }
     public function investmentSubmmission(Request $request)
     {
-        if (Auth::user() === null) {
-            return [
-                'success' => false,
-                'response_code' => Response::HTTP_BAD_REQUEST,
-                'message' => 'You Don\'t Have Permission',
-                'data' => null,
-            ]; 
-        }
     
         try {
             // Pass data dan file ke service
-            $response = $this->investmentService->invest($request->all());
+            $response = $this->lenderService->invest($request->all());
     
             return $this->sendResponse($response['data'], $response['message'], $response['response_code']);
     
         } catch (\Exception $e) {
-            return $this->sendError($e->getMessage(), 'Registration failed', 400);
+            return $this->sendError($e->getMessage(), 'Access Data Failed', 400);
         }
     }
 
     public function paymentInvest(Request $request)
     {
-        if (Auth::user() === null) {
-            return [
-                'success' => false,
-                'response_code' => Response::HTTP_BAD_REQUEST,
-                'message' => 'You Don\'t Have Permission',
-                'data' => null,
-            ]; 
-        }
-    
+
         try {
 
-            $response = $this->investmentService->paymentInvest($request->all());
+            $response = $this->lenderService->paymentInvest($request->all());
     
             return $this->sendResponse($response['data'], $response['message'], $response['response_code']);
     
         } catch (\Exception $e) {
-            return $this->sendError($e->getMessage(), 'Registration failed', 400);
+            return $this->sendError($e->getMessage(), 'Access Data Failed', 400);
         }
+    }
+
+    public function logInvestmentPersonal(Request $request){
+
+        $page = $request->query('page') ?? 1;
+        $raw = (bool) $request->query('raw') ?? false;
+        $search = $request->all() ?? null;
+        // $collection=TransactionLog::where('user_id', $this->user->id);
+        $collection=TransactionLog::where('type', 'Kredit');
+
+        if($request->startdate != null &&  $request->enddate == ''){
+            return $this->sendResponse(true, "Failed", "Please Send Data Request Date with Complite Parameters");
+        }
+
+        if (count($search) > 0) {
+            foreach ($search as $rows => $row) {
+
+                if (isset($request->startdate) && $rows === "startdate") {
+                    $startDate = $request->startdate;
+                    $endDate = $request->enddate ?? $startDate;
+                    $collection->whereBetween('created_at', [$startDate, $endDate]);
+                }
+
+                if ($rows == "virtual_account") {
+                    // dd($rows);
+                    $collection->whereHas('investment', function ($q) use ($row) {
+                        $q->where('va_number', '=',  $row);
+                    });
+                }
+            }
+        }
+        
+        $collection = $collection->orderBy('id', 'desc')->paginate(10, ['*'], 'page', $page);
+        $rawData = TransactionLogResource::collection($collection);
+        if ($raw) {
+            $datas = $rawData;
+        } else {
+            $responses = $rawData->response()->getData(true);
+            $links = $responses['links'];
+            $dataLinks = [];
+            unset($responses['links']);
+            $meta = $responses['meta'];
+            unset($responses['meta']);
+
+            $dataLinks['first_page_url'] = $links['first'];
+            $dataLinks['last_page_url'] = $links['last'];
+            $dataLinks['prev_page_url'] = $links['prev'];
+            $dataLinks['next_page_url'] = $links['next'];
+
+            $datas = array_merge($responses, $meta, $dataLinks);
+        }
+
+        return $this->sendResponse($datas, "Success", 200);
+
+        // $collection = Lending::with('lending_borrowers')->where('id','!=',null);
+
+
+        // dd($logTrasanction);
+        // try {
+
+        //     $response = $this->lenderService->logInvestPersonal($request->all());
+    
+        //     return $this->sendResponse($response['data'], $response['message'], $response['response_code']);
+    
+        // } catch (\Exception $e) {
+
+        //     return $this->sendError($e->getMessage(), 'Access Data Failed', 400);
+        // }
     }
     
 }

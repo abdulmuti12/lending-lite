@@ -5,37 +5,30 @@ use App\Models\Account;
 use App\Models\Bank;
 use App\Models\Investment;
 use App\Models\Transaction;
+use App\Models\TransactionLog;
 use Illuminate\Support\Facades\Hash;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Validator;
 
-class InvestmentService
+class LenderService
 {
-    /**
-     *
-     *
-     * @param array $data
-     * @return array
-     * @throws \Exception
-     */
+    private $user;
+   
+    public function __construct()
+    {
+        $this->validateAccess();
+        $this->user = auth()->user(); // Get the authenticated user 
+    }
+
     public function information()
     {
-        $user = auth()->user();
 
-        if ($user->type != 'lender') {
-            return [
-                'success' => false,
-                'response_code' => Response::HTTP_BAD_REQUEST,
-                'message' => 'Borrower Cannot Access this page.',
-                'data' => null,
-            ];
-        }
-
+        // dd(33);
         $dataCollection['main_info'] =[
-            'name'=>$user->name
+            'name'=>$this->user->name
         ];
 
-        foreach ($user->account as  $row) {
+        foreach ($this->user->account as  $row) {
             $dataCollection['Investasi '.$row->account_type] = [
                 'balance' => $row->balance,
                 'opening_date' => $row->opening_date,
@@ -54,9 +47,7 @@ class InvestmentService
     public function invest(array $data): array
     {
 
-        $user = auth()->user();
-
-        if ($user->type != 'lender') {
+        if ($this->user->type != 'lender') {
             return [
                 'success' => false,
                 'response_code' => Response::HTTP_BAD_REQUEST,
@@ -81,13 +72,13 @@ class InvestmentService
         }
 
         $bank =Bank::find($data['bank_id']);
-        $virtual_account = $bank->code.$user->phone_number;
+        $virtual_account = $bank->code.$this->user->phone_number;
 
         $dataCollection =[
             'bank_id' => $data['bank_id'],
             'total_investment' => $data['amount'],
             'va_number' => $virtual_account,
-            'lender_id' => $user->id,
+            'lender_id' => $this->user->id,
             'type'=>$data['invest_type'],
             'date_investment' => now(),
             'created_at' => now(),
@@ -114,9 +105,8 @@ class InvestmentService
 
     public function paymentInvest(array $data): array
     {
-        $user = auth()->user();
 
-        if ($user->type != 'lender') {
+        if ($this->user->type != 'lender') {
             return [
                 'success' => false,
                 'response_code' => Response::HTTP_BAD_REQUEST,
@@ -125,7 +115,7 @@ class InvestmentService
             ];
         }
 
-        $investment = Investment::where('lender_id', '=', $user->id)
+        $investment = Investment::where('lender_id', '=', $this->user->id)
                     ->where('status', '=', 'Pending')
                     ->where('va_number', '=', $data['virtual_account'])
                     ->first();
@@ -139,7 +129,7 @@ class InvestmentService
             ];
         }
 
-        $findAccount =Account::where('lender_id', '=', $user->id)
+        $findAccount =Account::where('lender_id', '=', $this->user->id)
                     ->where('account_type', '=', $investment->type)->first();
 
         $dataCollection =[
@@ -160,6 +150,18 @@ class InvestmentService
         $findAccount->updated_at = now();
         $findAccount->save();
 
+        $logData=[
+            'user_id'=>$investment->lender_id,
+            'type'=>'Kredit',
+            'bank_id'=>$investment->bank_id,
+            'amount'=>$investment->total_investment,
+            'description'=>$data['remark'],
+            'created_at'=>now(),
+            'investment_id'=>$investment->id
+        ];
+
+        $logTransaction = TransactionLog::create($logData);
+
        return 
         [
             'success' => true,
@@ -167,5 +169,33 @@ class InvestmentService
             'message' => 'Payment Success',
             'data' => null,
         ];
+    }
+
+
+    public function logInvestPersonal(array $data): array
+    {
+        
+    }
+
+    public function validateAccess(){
+
+
+        if(auth()->user()  == null){
+            return [
+                'success' => false,
+                'response_code' => Response::HTTP_BAD_REQUEST,
+                'message' => 'Borrower Cannot Access this page.',
+                'data' => null,
+            ];
+        }
+        
+        if (!auth()->user() || auth()->user()->type != 'lender') {
+            return [
+                'success' => false,
+                'response_code' => Response::HTTP_BAD_REQUEST,
+                'message' => 'Borrower Cannot Access this page.',
+                'data' => null,
+            ];
+        }
     }
 }

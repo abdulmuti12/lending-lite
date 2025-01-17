@@ -11,8 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('investments', function (Blueprint $table) {
-            $table->string('type', 50);
+        Schema::table('transactions_log', function (Blueprint $table) {
+            $table->string('name', 50)->nullable();
+
         });
     }
 
@@ -21,8 +22,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('investments', function (Blueprint $table) {
-            $table->dropColumn(columns: 'type',);
+        Schema::table('transactions_log', function (Blueprint $table) {
+            $table->dropColumn(columns: 'name');
         });
     }
 };

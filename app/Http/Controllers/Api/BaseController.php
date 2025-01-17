@@ -4,10 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use Illuminate\Http\Response;
+// use Illuminate\Http\Response;
+use Symfony\Component\HttpFoundation\Response;
+use Illuminate\Support\Facades\Auth;
+
 
 class BaseController extends Controller
 {
+
+    
     public function sendResponse($result, $message = null)
     {
         return response()->json([
@@ -27,5 +32,17 @@ class BaseController extends Controller
             'message' => $message,
             'error' => $error
         ], $code);
+    }
+
+    public function authCheck(){
+
+        if (Auth::user() === null) {
+            return [
+                'success' => false,
+                'response_code' => Response::HTTP_BAD_REQUEST,
+                'message' => 'You Don\'t Have Permission ',
+                'data' => null,
+            ];
+        }
     }
 }
