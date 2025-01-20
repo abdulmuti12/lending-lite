@@ -39,6 +39,7 @@ class AuthController extends BaseController
 
     public function me(Request $request)
     {
+        $user = auth()->user();
         try {
             if (!$token = JWTAuth::getToken()) {
                 return response()->json(['message' => 'Token not provided'], 400);
@@ -58,6 +59,25 @@ class AuthController extends BaseController
 
         } catch (\Tymon\JWTAuth\Exceptions\JWTException $e) {
             return response()->json(['message' => 'Token is invalid'], 400);
+        }
+    }
+    public function logout(Request $request)
+    {
+        // $user = auth()->user();
+        try {
+            $response = $this->authentificationService->logout();
+            return $this->sendResponse(
+                $response->original['success'] ?? true, // Default to true if not explicitly set
+                $response->original['message'] ?? 'Operation successful'
+            );
+    
+            // dd($response);
+            // return response()->json($response, $response->original['message']);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
         }
     }
 }

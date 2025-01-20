@@ -70,6 +70,25 @@ class AuthentificationService
             'expires_in' => Auth::factory()->getTTL() * 60
         ]);
     }
+    
+    public function logout()
+    {
+        try {
+            // Invalidate the token by using the JWTAuth facade
+            JWTAuth::invalidate(JWTAuth::getToken());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Logged out successfully'
+            ], Response::HTTP_OK);
+        } catch (JWTException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to log out, token invalid or expired',
+            ], Response::HTTP_BAD_REQUEST);
+        }
+    }
+
 }
 
 

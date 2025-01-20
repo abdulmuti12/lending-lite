@@ -185,6 +185,7 @@ class LenderService
 
         $account = $this->user->account()->where('account_type', $data['account_type'])->first();
 
+        // dd($account->id);
         if($data['amount'] > $account->balance){
 
             return [
@@ -208,7 +209,7 @@ class LenderService
 
         $dataCollection =[
             'debit_id'=>$debit->id,
-            'account_id'=>$account->id,
+            'account_id'=>$account->lender_id,
             'amount'=>$debit->amount,
             'transaction_date'=>now(),
             'type_transaction'=>'Debit',
@@ -268,4 +269,5 @@ class LenderService
             ];
         }
     }
+    
 }

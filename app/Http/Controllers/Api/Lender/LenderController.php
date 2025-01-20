@@ -12,6 +12,7 @@ use App\Http\Resources\TransactionLogResource;
 use App\Models\Debit;
 use App\Models\Transaction;
 use App\Models\TransactionLog;
+use App\Services\BankService;
 use Illuminate\Support\Facades\Hash;
 
 class LenderController extends BaseController
@@ -19,16 +20,19 @@ class LenderController extends BaseController
     protected $lenderService;
     private $user;
     private $log;
+    private $bankService;
 
     public function __construct(
         LenderService $lenderService,
-        TransactionLog $transactionLog
+        TransactionLog $transactionLog,
+        BankService $bankService
     )
     {
         $this->lenderService = $lenderService;
         $this->authCheck();
         $this->user = Auth::user();
         $this->log=$transactionLog;
+        $this->bankService = $bankService;
     }
 
     public function information(Request $request)
@@ -153,6 +157,13 @@ class LenderController extends BaseController
 
             return $this->sendError($e->getMessage(), 'Access Data Failed', 400);
         }
+    }
+
+    public function getBank(Request $request){
+        
+        $data = $this->bankService->getBanks();
+
+        return $data;
     }
     
 }

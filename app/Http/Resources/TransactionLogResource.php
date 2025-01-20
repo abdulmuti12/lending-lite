@@ -16,7 +16,7 @@ class TransactionLogResource extends JsonResource
     {
 
         $name = $this->type === 'Debit' 
-        ? optional($this->debits->userAccount)->name 
+        ? optional(@$this->debits->userAccount)->name 
         : optional($this->investment->userAccount)->name;
 
         $bank = $this->type === 'Debit' 

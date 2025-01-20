@@ -55,6 +55,7 @@ class RegisterService
                 'address' => $data['address'],
                 'ktp_file' => $ktpFilePath, // Menyimpan path file
                 'type' => $data['type'],
+                'created_at' => now(),
             ];
 
             if ($data['type'] == 'borrower') {
